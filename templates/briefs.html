@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Intelligence Briefs{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h4 class="mb-0">Intelligence Briefs</h4>
+    <small class="text-muted">Monthly funding landscape analysis</small>
+  </div>
+  <form method="post" action="{{ url_for('trigger_brief') }}">
+    <button type="submit" class="btn btn-sm btn-outline-primary">
+      <i class="bi bi-arrow-repeat me-1"></i>Regenerate Current Month
+    </button>
+  </form>
+</div>
+
+{% if briefs %}
+<div class="row g-3">
+  {% for brief in briefs %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small mb-1">{{ brief.period }}</div>
+        <h6 class="card-title mb-2">{{ brief.title }}</h6>
+        <div class="brief-content text-muted" style="font-size:0.8rem; max-height:120px; overflow:hidden; mask-image:linear-gradient(to bottom, black 60%, transparent 100%);">
+          {{ brief.content_html | safe }}
+        </div>
+      </div>
+      <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+          {{ brief.opportunities_analysed }} opportunities analysed
+        </small>
+        <div class="d-flex gap-1">
+          <a href="{{ url_for('export_brief_md', brief_id=brief.id) }}" class="btn btn-xs btn-outline-secondary" style="font-size:0.72rem; padding:0.2rem 0.5rem;" title="Download Markdown">
+            <i class="bi bi-markdown"></i>
+          </a>
+          <a href="{{ url_for('export_brief_pdf_view', brief_id=brief.id) }}" class="btn btn-xs btn-outline-secondary" style="font-size:0.72rem; padding:0.2rem 0.5rem;" title="Download PDF">
+            <i class="bi bi-file-pdf"></i>
+          </a>
+          <a href="{{ url_for('brief_detail', brief_id=brief.id) }}" class="btn btn-xs btn-primary" style="font-size:0.72rem; padding:0.2rem 0.5rem;">
+            Read →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5 text-muted">
+    <i class="bi bi-file-earmark-text fs-2 d-block mb-3"></i>
+    <p>No intelligence briefs yet.</p>
+    <p>Briefs are generated automatically after each monthly scrape.<br>
+       Run a scrape first, then click <strong>Regenerate Current Month</strong>.</p>
+    <a href="{{ url_for('settings') }}" class="btn btn-primary mt-2">
+      <i class="bi bi-arrow-repeat me-1"></i>Go to scraper
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

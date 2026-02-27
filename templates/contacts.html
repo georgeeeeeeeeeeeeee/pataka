@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Contacts{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h4 class="mb-0">Contacts</h4>
+    <small class="text-muted">Relationship database — warm contacts boost opportunity scores</small>
+  </div>
+  <a href="{{ url_for('new_contact') }}" class="btn btn-sm btn-primary">
+    <i class="bi bi-plus me-1"></i>Add Contact
+  </a>
+</div>
+
+{% if contacts %}
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Organisation</th>
+          <th>Contact</th>
+          <th>Role</th>
+          <th style="width:6rem">Warmth</th>
+          <th style="width:7rem">Last contact</th>
+          <th style="width:5rem"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contacts %}
+        <tr>
+          <td class="fw-semibold">{{ c.org_name }}</td>
+          <td>
+            {{ c.contact_name or '—' }}
+            {% if c.email %}
+            <div class="text-muted small">{{ c.email }}</div>
+            {% endif %}
+          </td>
+          <td class="text-muted small">{{ c.role or '—' }}</td>
+          <td>
+            <span class="badge bg-{{ c.warmth_colour }}">{{ c.warmth_label }}</span>
+          </td>
+          <td class="text-muted small">{{ c.last_contact | datetime_fmt('%d %b %Y') if c.last_contact else '—' }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('edit_contact', contact_id=c.id) }}" class="btn btn-xs btn-outline-secondary me-1" style="font-size:0.72rem; padding:0.2rem 0.5rem;">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" action="{{ url_for('delete_contact', contact_id=c.id) }}" class="d-inline"
+                  onsubmit="return confirm('Delete {{ c.contact_name or c.org_name }}?')">
+              <button class="btn btn-xs btn-outline-danger" style="font-size:0.72rem; padding:0.2rem 0.5rem;">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% if c.relationship_notes %}
+        <tr>
+          <td colspan="6" class="pt-0 pb-2">
+            <div class="text-muted small ps-2 border-start border-2 border-secondary" style="font-style:italic;">
+              {{ c.relationship_notes }}
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="mt-2 text-muted small">
+  Warm (2) and Hot (3) contacts add +1 to the fit score of opportunities at their organisation.
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5 text-muted">
+    <i class="bi bi-people fs-2 d-block mb-3"></i>
+    <p>No contacts yet.</p>
+    <p>Add contacts at funders and contracting agencies.<br>
+       Warm and Hot contacts boost opportunity scores by +1.</p>
+    <a href="{{ url_for('new_contact') }}" class="btn btn-primary mt-2">
+      <i class="bi bi-plus me-1"></i>Add your first contact
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

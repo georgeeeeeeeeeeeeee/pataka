@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h4 class="mb-0">Settings & Scraper</h4>
+  <small class="text-muted">Configure sources, trigger manual runs, review scraper history</small>
+</div>
+
+<div class="row g-4">
+  <!-- Manual scrape trigger -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-arrow-repeat me-2 text-primary"></i>Run Scraper Now
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('trigger_scrape') }}">
+          <p class="text-muted small mb-3">
+            Select sources to scrape, or leave all unchecked to run everything.
+            The job runs in the background — refresh after ~60 seconds.
+          </p>
+          <div class="row g-2 mb-3">
+            {% for source in sources %}
+            <div class="col-6">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="source_ids"
+                  value="{{ source.id }}" id="src_{{ source.id }}">
+                <label class="form-check-label small" for="src_{{ source.id }}">
+                  {{ source.name }}
+                  <span class="badge bg-light text-muted border" style="font-size:0.65rem;">
+                    {{ source.country }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-arrow-repeat me-1"></i>Start Scrape
+          </button>
+          <div class="text-muted small mt-2">
+            Scheduled: automatically on 1st of each month at 08:00 NZT.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent scraper runs -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-clock-history me-2 text-secondary"></i>Recent Runs
+      </div>
+      <div class="card-body p-0">
+        {% if runs %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Source</th>
+                <th>Started</th>
+                <th>Status</th>
+                <th>Found</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for run in runs %}
+              <tr>
+                <td class="small">{{ run.scraper_id | replace('_',' ') | title }}</td>
+                <td class="small text-muted">{{ run.started_at | datetime_fmt('%d %b %H:%M') }}</td>
+                <td>
+                  <span class="status-dot dot-{{ run.status }}"></span>
+                  <span class="small">{{ run.status }}</span>
+                  {% if run.error_message %}
+                  <i class="bi bi-info-circle text-danger ms-1" title="{{ run.error_message }}"></i>
+                  {% endif %}
+                </td>
+                <td class="small">{{ run.opportunities_found }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted small">No runs yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile summary -->
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold pt-3 d-flex justify-content-between">
+        <div><i class="bi bi-person-badge me-2 text-primary"></i>Practitioner Profile (scoring ground truth)</div>
+        <small class="text-muted fw-normal">Edit profile.json to update</small>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <h6 class="text-muted small text-uppercase fw-semibold mb-2">Identity</h6>
+            <dl class="row g-1" style="font-size:0.85rem;">
+              <dt class="col-4 text-muted">Name</dt><dd class="col-8">{{ profile.identity.name }}</dd>
+              <dt class="col-4 text-muted">Location</dt><dd class="col-8">{{ profile.identity.location }}</dd>
+              <dt class="col-4 text-muted">Role</dt><dd class="col-8">{{ profile.identity.current_role }}</dd>
+              <dt class="col-4 text-muted">Status</dt><dd class="col-8">{{ profile.identity.registration_status | replace('_',' ') | title }}</dd>
+              <dt class="col-4 text-muted">Entity</dt><dd class="col-8">{{ profile.identity.entity_type | replace('_',' ') | title }}</dd>
+            </dl>
+          </div>
+          <div class="col-md-4">
+            <h6 class="text-muted small text-uppercase fw-semibold mb-2">Competency Areas</h6>
+            {% for key, comp in profile.competencies.items() %}
+            <div class="d-flex justify-content-between align-items-center mb-1" style="font-size:0.82rem;">
+              <span>{{ key | replace('_',' ') | title }}</span>
+              <div class="progress" style="width:80px;height:8px;">
+                <div class="progress-bar bg-primary" style="width:{{ (comp.weight / 10 * 100)|int }}%"></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="col-md-4">
+            <h6 class="text-muted small text-uppercase fw-semibold mb-2">Impact</h6>
+            <dl class="row g-1" style="font-size:0.85rem;">
+              <dt class="col-6 text-muted">Children reached</dt>
+              <dd class="col-6 fw-semibold">~{{ "{:,}".format(profile.demonstrated_impact.children_reached) }}</dd>
+              <dt class="col-6 text-muted">Professionals trained</dt>
+              <dd class="col-6 fw-semibold">{{ profile.demonstrated_impact.professionals_trained }}+</dd>
+            </dl>
+            <h6 class="text-muted small text-uppercase fw-semibold mb-2 mt-3">Scoring Rules</h6>
+            <div style="font-size:0.78rem; color:#555;">
+              <div class="text-success">✓ Māori edge: +{{ profile.scoring_rules.boosts.maori_community_edge }}</div>
+              <div class="text-success">✓ School edge: +{{ profile.scoring_rules.boosts.school_based_edge }}</div>
+              <div class="text-success">✓ Warm contact: +{{ profile.scoring_rules.boosts.warm_contact }}</div>
+              <div class="text-danger">✗ Full reg required: {{ profile.scoring_rules.penalties.requires_full_nzac_registration }}</div>
+              <div class="text-danger">✗ Org required: {{ profile.scoring_rules.penalties.requires_organisational_affiliation }}</div>
+              <div class="text-danger">✗ Te Reo fluency: {{ profile.scoring_rules.penalties.requires_te_reo_fluency }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API key status -->
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-key me-2 text-warning"></i>Configuration
+      </div>
+      <div class="card-body">
+        <div class="row g-3" style="font-size:0.875rem;">
+          <div class="col-md-4">
+            <strong>Anthropic API Key</strong><br>
+            {% if profile %}
+            <span class="text-success"><i class="bi bi-check-circle me-1"></i>
+              {% if 'ANTHROPIC_API_KEY' in config.environ or True %}Configured in .env{% endif %}
+            </span>
+            {% endif %}
+            <div class="text-muted small mt-1">
+              Used for fit scoring, brief generation, and application drafting.
+              Set in your <code>.env</code> file as <code>ANTHROPIC_API_KEY=sk-ant-...</code>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <strong>Model</strong><br>
+            <code style="font-size:0.82rem;">claude-opus-4-6</code>
+            <div class="text-muted small mt-1">Override with <code>ANTHROPIC_MODEL</code> in .env</div>
+          </div>
+          <div class="col-md-4">
+            <strong>Database</strong><br>
+            <code style="font-size:0.82rem;">SQLite (local)</code>
+            <div class="text-muted small mt-1">Stored at <code>data/opportunity_agent.db</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

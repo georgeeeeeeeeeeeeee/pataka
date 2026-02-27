@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Contact' if action == 'edit' else 'New Contact' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="{{ url_for('contacts') }}" class="text-muted small text-decoration-none">
+    <i class="bi bi-arrow-left me-1"></i>Back to contacts
+  </a>
+  <h4 class="mb-0 mt-1">{{ 'Edit Contact' if action == 'edit' else 'Add Contact' }}</h4>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Organisation *</label>
+            <input type="text" name="org_name" class="form-control"
+              value="{{ contact.org_name if contact else '' }}" required
+              placeholder="e.g. Creative New Zealand">
+            <div class="form-text">Match this to the funder name for score boosting to work.</div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Contact name</label>
+              <input type="text" name="contact_name" class="form-control"
+                value="{{ contact.contact_name if contact else '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Role / title</label>
+              <input type="text" name="role" class="form-control"
+                value="{{ contact.role if contact else '' }}">
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control"
+                value="{{ contact.email if contact else '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              <input type="text" name="phone" class="form-control"
+                value="{{ contact.phone if contact else '' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Relationship warmth</label>
+            <div class="d-flex gap-2 flex-wrap">
+              {% for val, label, colour, desc in [
+                (0, 'None', 'secondary', 'No relationship'),
+                (1, 'Cold', 'info', 'Aware of / met briefly'),
+                (2, 'Warm', 'warning', 'Had real conversation / email exchange'),
+                (3, 'Hot', 'success', 'Active ongoing relationship'),
+              ] %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="warmth" id="w{{ val }}" value="{{ val }}"
+                  {% if (contact.warmth if contact else 0) == val %}checked{% endif %}>
+                <label class="form-check-label" for="w{{ val }}">
+                  <span class="badge bg-{{ colour }}">{{ label }}</span>
+                  <small class="text-muted ms-1">{{ desc }}</small>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Last contact date</label>
+            <input type="date" name="last_contact" class="form-control"
+              value="{{ contact.last_contact.strftime('%Y-%m-%d') if contact and contact.last_contact else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Relationship notes</label>
+            <textarea name="relationship_notes" class="form-control" rows="3"
+              placeholder="How do you know them? Any history with their funding programmes?">{{ contact.relationship_notes if contact else '' }}</textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              {{ 'Save Changes' if action == 'edit' else 'Add Contact' }}
+            </button>
+            <a href="{{ url_for('contacts') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

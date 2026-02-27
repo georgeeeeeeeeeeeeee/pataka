@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h4 class="mb-0">Dashboard</h4>
+    <small class="text-muted">{{ now.strftime('%A, %d %B %Y') }}</small>
+  </div>
+  <a href="{{ url_for('settings') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-repeat me-1"></i>Run Scrape
+  </a>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  {% set stat_items = [
+    ('Total Opportunities', stats.total, 'bi-collection', '#4f8ef7'),
+    ('New / Unreviewed', stats.new, 'bi-bell', '#f39c12'),
+    ('High Fit (8+)', stats.high_fit, 'bi-star-fill', '#27ae60'),
+    ('Interested', stats.interested, 'bi-bookmark-check', '#8e44ad'),
+    ('Applied', stats.applied, 'bi-send-check', '#2980b9'),
+    ('Tenders', stats.tenders, 'bi-building', '#7f8c8d'),
+  ] %}
+  {% for label, val, icon, colour in stat_items %}
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <i class="{{ icon }}" style="color:{{ colour }}; font-size:1.1rem;"></i>
+          <span class="text-muted" style="font-size:0.75rem;">{{ label }}</span>
+        </div>
+        <div class="fw-bold fs-4">{{ val }}</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <!-- Upcoming deadlines -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold border-bottom-0 pt-3">
+        <i class="bi bi-calendar-event me-2 text-danger"></i>Upcoming Deadlines
+        <small class="text-muted fw-normal ms-1">(score ≥ 5)</small>
+      </div>
+      <div class="card-body p-0">
+        {% if upcoming %}
+        <ul class="list-group list-group-flush">
+          {% for opp in upcoming %}
+          <li class="list-group-item px-3 py-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="score-badge {% if opp.fit_score >= 8 %}score-high{% elif opp.fit_score >= 5 %}score-mid{% else %}score-low{% endif %}">
+                {{ opp.fit_score|int if opp.fit_score else '?' }}
+              </span>
+              <div class="flex-grow-1 min-width-0">
+                <a href="{{ url_for('opportunity_detail', opp_id=opp.id) }}" class="text-dark fw-semibold text-decoration-none d-block text-truncate" style="font-size:0.875rem;">
+                  {{ opp.grant_name }}
+                </a>
+                <small class="text-muted">{{ opp.funder_name }}</small>
+              </div>
+              <div class="text-end flex-shrink-0">
+                <div class="{% if opp.deadline_urgent %}deadline-urgent{% else %}text-muted{% endif %}" style="font-size:0.78rem;">
+                  {{ opp.deadline | datetime_fmt('%d %b') }}
+                </div>
+                {% if opp.days_until_deadline is not none %}
+                <small class="{% if opp.deadline_urgent %}text-danger{% else %}text-muted{% endif %}">
+                  {{ opp.days_until_deadline }}d
+                </small>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="bi bi-calendar-x fs-3 d-block mb-2"></i>
+          No upcoming deadlines with score ≥ 5.<br>
+          <a href="{{ url_for('settings') }}">Run a scrape</a> to populate.
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-footer bg-white border-top-0">
+        <a href="{{ url_for('opportunities', sort='deadline_asc') }}" class="text-muted small">View all by deadline →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- High fit opportunities -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold border-bottom-0 pt-3">
+        <i class="bi bi-star me-2 text-warning"></i>High Fit — Score 8+
+        <small class="text-muted fw-normal ms-1">(new / interested)</small>
+      </div>
+      <div class="card-body p-0">
+        {% if high_fit %}
+        <ul class="list-group list-group-flush">
+          {% for opp in high_fit %}
+          <li class="list-group-item px-3 py-2">
+            <div class="d-flex align-items-start gap-2">
+              <span class="score-badge score-high mt-1">{{ opp.fit_score|int }}</span>
+              <div class="flex-grow-1 min-width-0">
+                <a href="{{ url_for('opportunity_detail', opp_id=opp.id) }}" class="text-dark fw-semibold text-decoration-none" style="font-size:0.875rem;">
+                  {{ opp.grant_name }}
+                </a>
+                <div class="text-muted" style="font-size:0.78rem;">{{ opp.funder_name }}</div>
+                {% if opp.fit_justification %}
+                <div class="text-secondary mt-1" style="font-size:0.75rem; font-style:italic;">{{ opp.fit_justification }}</div>
+                {% endif %}
+                <div class="mt-1 d-flex flex-wrap gap-1">
+                  {% if opp.maori_edge %}<span class="flag-pill bg-success text-white">Māori edge</span>{% endif %}
+                  {% if opp.school_edge %}<span class="flag-pill bg-primary text-white">School edge</span>{% endif %}
+                  {% if opp.requires_org %}<span class="flag-pill bg-warning text-dark">Org required</span>{% endif %}
+                  {% if opp.amount_text %}<span class="flag-pill bg-light border text-muted">{{ opp.amount_text }}</span>{% endif %}
+                </div>
+              </div>
+              <form method="post" action="{{ url_for('update_status', opp_id=opp.id) }}" class="flex-shrink-0">
+                <input type="hidden" name="status" value="interested">
+                <button class="btn btn-xs btn-outline-primary" style="font-size:0.72rem; padding:0.2rem 0.5rem;" title="Mark interested">
+                  <i class="bi bi-bookmark"></i>
+                </button>
+              </form>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="bi bi-trophy fs-3 d-block mb-2"></i>
+          No high-fit opportunities yet.<br>Run a scrape to discover them.
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-footer bg-white border-top-0">
+        <a href="{{ url_for('opportunities', score_min='8') }}" class="text-muted small">View all high-fit →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Latest brief preview -->
+  {% if latest_brief %}
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold border-bottom-0 pt-3 d-flex justify-content-between align-items-center">
+        <div><i class="bi bi-file-earmark-text me-2 text-primary"></i>Latest Brief — {{ latest_brief.title }}</div>
+        <a href="{{ url_for('brief_detail', brief_id=latest_brief.id) }}" class="btn btn-sm btn-outline-primary">Read full brief</a>
+      </div>
+      <div class="card-body">
+        <div class="brief-content text-muted" style="max-height:200px; overflow:hidden; mask-image:linear-gradient(to bottom, black 60%, transparent 100%);">
+          {{ latest_brief.content_html | safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ brief.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <a href="{{ url_for('briefs') }}" class="text-muted small text-decoration-none">
+      <i class="bi bi-arrow-left me-1"></i>All briefs
+    </a>
+    <h4 class="mb-0 mt-1">{{ brief.title }}</h4>
+    <small class="text-muted">{{ brief.opportunities_analysed }} opportunities analysed · Generated {{ brief.created_at | datetime_fmt }}</small>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('export_brief_md', brief_id=brief.id) }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-markdown me-1"></i>Markdown
+    </a>
+    <a href="{{ url_for('export_brief_pdf_view', brief_id=brief.id) }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-file-pdf me-1"></i>PDF
+    </a>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body px-4 py-4">
+        <div class="brief-content">
+          {{ brief.content_html | safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}{{ opp.grant_name[:60] }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <a href="{{ url_for('opportunities') }}" class="text-muted small text-decoration-none">
+      <i class="bi bi-arrow-left me-1"></i>Back to opportunities
+    </a>
+    <h4 class="mb-0 mt-1">{{ opp.grant_name }}</h4>
+    <div class="text-muted">{{ opp.funder_name }}
+      {% if opp.is_tender %}<span class="badge bg-secondary ms-1">TENDER</span>{% endif %}
+      {% if opp.high_value %}<span class="badge bg-success ms-1">$50k+</span>{% endif %}
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <div class="text-center">
+      <div class="score-badge {% if (opp.fit_score or 0) >= 8 %}score-high{% elif (opp.fit_score or 0) >= 5 %}score-mid{% else %}score-low{% endif %}" style="width:3rem;height:3rem;font-size:1.1rem;">
+        {{ opp.fit_score|int if opp.fit_score else '?' }}
+      </div>
+      <div style="font-size:0.65rem; color:#888;">/ 10</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Main content -->
+  <div class="col-lg-8">
+    <!-- Flags -->
+    {% set flags = [] %}
+    {% if opp.requires_org %}{% set _ = flags.append(('warning', 'Requires organisational affiliation — consider partnership arrangements')) %}{% endif %}
+    {% if opp.maori_edge %}{% set _ = flags.append(('success', 'Māori community experience gives competitive edge')) %}{% endif %}
+    {% if opp.school_edge %}{% set _ = flags.append(('primary', 'School-based background gives competitive edge')) %}{% endif %}
+    {% if opp.requires_registration %}{% set _ = flags.append(('danger', 'Requires full registration — George is working toward NZAC')) %}{% endif %}
+    {% if opp.requires_maori_fluency %}{% set _ = flags.append(('warning', 'Requires Te Reo Māori fluency — George has developing proficiency')) %}{% endif %}
+    {% if opp.high_value %}{% set _ = flags.append(('success', 'High-value opportunity (>$50,000)')) %}{% endif %}
+
+    {% if flags %}
+    <div class="mb-3 d-flex flex-column gap-1">
+      {% for colour, msg in flags %}
+      <div class="alert alert-{{ colour }} py-2 mb-0 small"><i class="bi bi-flag me-2"></i>{{ msg }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Fit assessment -->
+    {% if opp.fit_justification or opp.relevance_paragraph %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-clipboard-pulse me-2 text-primary"></i>Fit Assessment
+      </div>
+      <div class="card-body">
+        {% if opp.fit_justification %}
+        <p class="fw-semibold mb-2">{{ opp.fit_justification }}</p>
+        {% endif %}
+        {% if opp.relevance_paragraph %}
+        <p class="text-secondary mb-0">{{ opp.relevance_paragraph }}</p>
+        {% endif %}
+        {% if opp.score_breakdown %}
+        {% set breakdown = opp.score_breakdown | tojson | safe %}
+        <details class="mt-2">
+          <summary class="text-muted small" style="cursor:pointer;">Score breakdown</summary>
+          <pre class="bg-light rounded p-2 mt-2 small">{{ opp.score_breakdown }}</pre>
+        </details>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Eligibility -->
+    {% if opp.eligibility_summary %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-check-circle me-2 text-success"></i>Eligibility
+      </div>
+      <div class="card-body">{{ opp.eligibility_summary }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Description -->
+    {% if opp.description %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-file-text me-2 text-secondary"></i>Description
+      </div>
+      <div class="card-body" style="white-space:pre-wrap; font-size:0.9rem; color:#444;">{{ opp.description }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Applications/drafts -->
+    {% if applications %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3 d-flex justify-content-between align-items-center">
+        <div><i class="bi bi-pen me-2 text-warning"></i>Draft Applications</div>
+        <span class="badge bg-secondary">{{ applications|length }}</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="accordion accordion-flush" id="appAccordion">
+          {% for app in applications %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#app{{ app.id }}">
+                Version {{ app.version }} — {{ app.created_at | datetime_fmt('%d %b %Y %H:%M') }}
+              </button>
+            </h2>
+            <div id="app{{ app.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#appAccordion">
+              <div class="accordion-body">
+                <div class="brief-content" style="font-size:0.875rem;">{{ app.content_md | replace('\n', '<br>') | safe }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Notes -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-journal-text me-2 text-secondary"></i>Your Notes
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('update_notes', opp_id=opp.id) }}">
+          <textarea name="notes" class="form-control form-control-sm mb-2" rows="3" placeholder="Add notes, reminders, contact details...">{{ opp.notes or '' }}</textarea>
+          <button type="submit" class="btn btn-sm btn-outline-secondary">Save Notes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Key details -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">Details</div>
+      <div class="card-body">
+        <dl class="row g-1 mb-0" style="font-size:0.875rem;">
+          <dt class="col-5 text-muted">Amount</dt>
+          <dd class="col-7">{{ opp.amount_text or '—' }}</dd>
+
+          <dt class="col-5 text-muted">Deadline</dt>
+          <dd class="col-7 {% if opp.deadline_urgent %}deadline-urgent{% endif %}">
+            {% if opp.deadline %}{{ opp.deadline | datetime_fmt }}
+              {% if opp.days_until_deadline is not none %}
+              <small class="text-muted">({{ opp.days_until_deadline }} days)</small>
+              {% endif %}
+            {% else %}{{ opp.deadline_text or '—' }}{% endif %}
+          </dd>
+
+          <dt class="col-5 text-muted">Type</dt>
+          <dd class="col-7">{{ 'Tender / RFP' if opp.is_tender else 'Grant / Funding' }}</dd>
+
+          <dt class="col-5 text-muted">Source</dt>
+          <dd class="col-7">{{ opp.source_id | replace('_',' ') | title }}</dd>
+
+          <dt class="col-5 text-muted">First seen</dt>
+          <dd class="col-7">{{ opp.first_seen | datetime_fmt }}</dd>
+        </dl>
+        <a href="{{ opp.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary w-100 mt-3">
+          <i class="bi bi-box-arrow-up-right me-1"></i>View on funder website
+        </a>
+      </div>
+    </div>
+
+    <!-- Status control -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">Status</div>
+      <div class="card-body">
+        <div class="mb-2 text-center">
+          <span class="badge bg-{{ opp.status_colour }} fs-6">{{ opp.status_label }}</span>
+        </div>
+        <form method="post" action="{{ url_for('update_status', opp_id=opp.id) }}">
+          <div class="d-grid gap-1">
+            {% for s, label, colour in [
+              ('interested', 'Mark Interested', 'outline-primary'),
+              ('watching', 'Watch', 'outline-warning'),
+              ('applied', 'Mark Applied', 'outline-success'),
+              ('declined', 'Decline', 'outline-danger'),
+              ('not_eligible', 'Not Eligible', 'outline-secondary'),
+              ('new', 'Reset to New', 'outline-dark'),
+            ] %}
+            {% if opp.status != s %}
+            <button type="submit" name="status" value="{{ s }}" class="btn btn-sm btn-{{ colour }}">
+              {{ label }}
+            </button>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Generate draft -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-robot me-2 text-warning"></i>AI Draft Application
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('draft_application_view', opp_id=opp.id) }}">
+          <textarea name="notes" class="form-control form-control-sm mb-2" rows="2"
+            placeholder="Optional context for Claude (e.g. 'focus on Nga Whetuu Marama', 'target music funding angle')..."></textarea>
+          <button type="submit" class="btn btn-sm btn-warning w-100">
+            <i class="bi bi-pen me-1"></i>Generate Draft
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">Export</div>
+      <div class="card-body d-grid gap-1">
+        <a href="{{ url_for('export_opportunity_md', opp_id=opp.id) }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-markdown me-1"></i>Download Markdown
+        </a>
+        <a href="{{ url_for('export_opportunity_pdf', opp_id=opp.id) }}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-file-pdf me-1"></i>Download PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- Related contacts -->
+    {% if contacts %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold pt-3">
+        <i class="bi bi-person-check me-2 text-success"></i>Contacts at this funder
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for c in contacts %}
+          <li class="list-group-item px-3 py-2" style="font-size:0.875rem;">
+            <div class="fw-semibold">{{ c.contact_name or c.org_name }}</div>
+            <div class="text-muted small">{{ c.role or '' }}</div>
+            <span class="badge bg-{{ c.warmth_colour }} mt-1">{{ c.warmth_label }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
