@@ -284,7 +284,7 @@ class MSDScraper(BaseScraper):
                 continue
             if any(
                 kw in text.lower() or kw in href.lower()
-                for kw in ["fund", "grant", "contract", "rfp", "request for"]
+                for kw in ["fund", "grant", "support"]
             ):
                 opp = ScrapedOpportunity()
                 opp.source_id = self.source_id
@@ -387,57 +387,6 @@ class TPKScraper(BaseScraper):
 
         logger.info(f"[tpk] Found {len(unique)} opportunities")
         return unique
-
-
-class FoundationNorthScraper(BaseScraper):
-    """
-    Foundation North — foundationnorth.org.nz/grants
-    Auckland and Northland philanthropic grants.
-    """
-
-    GRANTS_URL = "https://www.foundationnorth.org.nz/funding/"
-
-    def scrape(self) -> list[ScrapedOpportunity]:
-        results = []
-        html = self.fetch(self.GRANTS_URL)
-        if not html:
-            return results
-        soup = self.parse(html)
-
-        # Foundation North has grant programme cards
-        cards = (
-            soup.select(".grant-programme")
-            or soup.select(".programme-card")
-            or soup.select(".card")
-            or soup.select("article")
-        )
-
-        for card in cards[:20]:
-            link = card.find("a", href=True)
-            if not link:
-                continue
-            title = self.clean_text(link.get_text())
-            if not title or len(title) < 5:
-                continue
-            opp = ScrapedOpportunity()
-            opp.source_id = self.source_id
-            opp.funder_name = self.funder_name
-            opp.grant_name = title
-            opp.url = self.make_absolute(link["href"])
-            opp.description = self.clean_text(card.get_text(" "))[:800]
-            results.append(opp)
-
-        if not results:
-            opp = ScrapedOpportunity()
-            opp.source_id = self.source_id
-            opp.funder_name = self.funder_name
-            opp.grant_name = "Foundation North — Grants"
-            opp.url = self.GRANTS_URL
-            opp.description = self.clean_text(soup.get_text(" "))[:2000]
-            results.append(opp)
-
-        logger.info(f"[foundation_north] Found {len(results)} opportunities")
-        return results
 
 
 class GenericGrantListingScraper(BaseScraper):

@@ -8,24 +8,45 @@ from scrapers.nz_funders import (
     CommunityMattersScraper,
     MSDScraper,
     TPKScraper,
-    FoundationNorthScraper,
     GenericGrantListingScraper,
 )
 from scrapers.intl_funders import WellcomeScraper, RWJFScraper, OpenSocietyScraper
-from scrapers.gets import GETSScraper
+from scrapers.wellington_funders import (
+    WCCCommunityScraper,
+    GWRCScraper,
+    WellingtonCommunityTrustScraper,
+    NikauFoundationScraper,
+    HuttCityScraper,
+    UpperHuttScraper,
+    LionFoundationScraper,
+    FourWindsFoundationScraper,
+    MangaiPahoScraper,
+    PacificTrustAotearoaScraper,
+)
 
 SCRAPER_REGISTRY = {
+    # National NZ funders
     "creative_nz": CreativeNZScraper,
     "nz_on_air": NZOnAirScraper,
     "community_matters": CommunityMattersScraper,
     "msd": MSDScraper,
     "tpk": TPKScraper,
-    "foundation_north": FoundationNorthScraper,
     "generic_grant_listing": GenericGrantListingScraper,
+    # Wellington regional funders
+    "wcc": WCCCommunityScraper,
+    "gwrc": GWRCScraper,
+    "wct": WellingtonCommunityTrustScraper,
+    "nikau": NikauFoundationScraper,
+    "hutt_city": HuttCityScraper,
+    "upper_hutt": UpperHuttScraper,
+    "lion": LionFoundationScraper,
+    "four_winds": FourWindsFoundationScraper,
+    "mangai_paho": MangaiPahoScraper,
+    "pacific_trust": PacificTrustAotearoaScraper,
+    # International funders
     "wellcome": WellcomeScraper,
     "rwjf": RWJFScraper,
     "open_society": OpenSocietyScraper,
-    "gets": GETSScraper,
 }
 
 

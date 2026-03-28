@@ -7,3 +7,10 @@ applications/
 instance/
 *.db
 *.sqlite
+
+# Org profile — contains real organisation data in production; never commit
+profile.json
+
+# Data exports and logs
+*.csv
+*.log

@@ -1,0 +1,136 @@
+{
+  "identity": {
+    "org_name": "Aro Valley Community Trust",
+    "org_type": "charitable_trust",
+    "entity_type": "registered_organisation",
+    "location": "Wellington, New Zealand",
+    "region": "Wellington City",
+    "focus_areas": ["community development", "arts and culture", "youth", "environment", "social wellbeing"],
+    "registration": "registered_charity",
+    "annual_budget_range": "50k_200k"
+  },
+  "demonstrated_impact": {
+    "community_members_engaged": "1,200+ residents engaged through events and programmes annually",
+    "years_operating": "Established 2009 — 15+ years of continuous community service in Aro Valley",
+    "volunteers": "35 active volunteers; 8 part-time paid staff",
+    "programmes": [
+      "Aro Valley Community Centre — open access space, classes, and events",
+      "Neighbourhood composting and community garden network (12 sites)",
+      "Youth arts programme (ages 10–18, weekly sessions)",
+      "Monthly community kai — free shared meals, open to all",
+      "Aro Valley Arts Residency — annual residency for emerging Wellington artists"
+    ]
+  },
+  "competencies": {
+    "community_development_and_engagement": {
+      "weight": 10,
+      "keywords": [
+        "community development", "community engagement", "neighbourhood development",
+        "community resilience", "social cohesion", "place-based", "community-led",
+        "community wellbeing", "grassroots", "community hub", "community centre",
+        "civic participation", "community capacity building", "volunteering"
+      ],
+      "evidence": "15 years operating Aro Valley Community Centre; 1,200+ residents engaged annually; 35 active volunteers"
+    },
+    "arts_culture_and_creative_programming": {
+      "weight": 9,
+      "keywords": [
+        "arts", "culture", "creative", "arts programming", "arts funding",
+        "community arts", "creative practice", "arts residency", "emerging artists",
+        "arts access", "cultural participation", "music", "theatre", "visual arts",
+        "Creative NZ", "arts and wellbeing", "arts and community"
+      ],
+      "evidence": "Annual arts residency programme; youth arts (weekly); community gallery space; partnered with Toi Whakaari and BATS Theatre"
+    },
+    "youth_programmes_and_rangatahi": {
+      "weight": 9,
+      "keywords": [
+        "youth", "rangatahi", "young people", "youth development", "tamariki",
+        "youth programmes", "after school", "youth arts", "youth mentoring",
+        "youth wellbeing", "youth engagement", "ages 10-24", "youth-led",
+        "youth voice", "positive youth development"
+      ],
+      "evidence": "Weekly youth arts programme (ages 10-18); school holiday programmes; youth-led community projects"
+    },
+    "environment_and_sustainability": {
+      "weight": 8,
+      "keywords": [
+        "environment", "sustainability", "climate", "community garden",
+        "composting", "urban ecology", "green infrastructure", "biodiversity",
+        "waste reduction", "food security", "permaculture", "zero waste",
+        "environmental education", "community resilience"
+      ],
+      "evidence": "12-site composting and community garden network; zero-waste events; native planting days"
+    },
+    "kaupapa_maori_and_pacific_responsiveness": {
+      "weight": 7,
+      "keywords": [
+        "Māori", "kaupapa Māori", "iwi", "hapū", "whānau", "tangata whenua",
+        "Treaty of Waitangi", "bicultural", "Pacific", "Pasifika",
+        "cultural responsiveness", "cultural safety", "indigenous",
+        "te ao Māori", "manaakitanga", "whanaungatanga"
+      ],
+      "evidence": "Tikanga Māori embedded in governance; partnership with Te Ātiawa ki Whakarongotai; bilingual signage and programming"
+    },
+    "food_security_and_social_services": {
+      "weight": 7,
+      "keywords": [
+        "food security", "community kai", "food bank", "free meals", "community pantry",
+        "social services", "social support", "financial hardship", "cost of living",
+        "community wellbeing", "social inclusion", "poverty", "equity",
+        "vulnerable communities", "whānau support"
+      ],
+      "evidence": "Monthly community kai serving 80–120 people; community pantry; connections to social support agencies"
+    }
+  },
+  "scoring_rules": {
+    "base_tiers": {
+      "high_8_10": "Direct match with current programmes, demonstrated track record, and organisational focus areas",
+      "medium_5_7": "Adjacent to current work; achievable with partnership or light programme adaptation",
+      "low_1_4": "Outside current capacity, requires specialist credentials not held, or wrong geographic scope"
+    },
+    "boosts": {
+      "maori_community_edge": 1,
+      "community_youth_edge": 1,
+      "warm_contact": 1
+    },
+    "penalties": {
+      "note": "Penalties apply only where the requirement cannot be met. Because entity_type is registered_organisation, requires_organisational_affiliation is NOT penalised — the Trust meets this criterion.",
+      "requires_te_reo_fluency": -1,
+      "requires_individual_practitioner": -2
+    }
+  },
+  "affiliations": [
+    "Wellington City Council (community lease holder)",
+    "Te Ātiawa ki Whakarongotai",
+    "Toi Whakaari Wellington",
+    "BATS Theatre",
+    "Wellington Community Network",
+    "Kai Pledge Wellington"
+  ],
+  "notes": {
+    "org_eligibility": "Registered charity CC12345 (fictional). Incorporated as a charitable trust. Can apply to funders requiring organisational status.",
+    "capacity": "Small-to-medium community trust. Preference for multi-year or renewable grants where possible. Reporting capacity is moderate — complex multi-funder reporting is a constraint."
+  },
+  "geographic_priority": {
+    "wellington_city": 10,
+    "lower_hutt": 6,
+    "upper_hutt": 6,
+    "kapiti": 5,
+    "wairarapa": 5,
+    "wellington_region": 8,
+    "national_nz": 7,
+    "international": 2
+  },
+  "funding_keywords": [
+    "community development", "community wellbeing", "community resilience",
+    "arts and culture", "community arts", "arts residency", "emerging artists",
+    "youth development", "rangatahi", "youth programmes", "positive youth development",
+    "environment", "community garden", "composting", "urban sustainability",
+    "food security", "community kai", "free meals", "social inclusion",
+    "Māori community", "kaupapa Māori", "Treaty of Waitangi", "bicultural practice",
+    "Pacific community", "Pasifika", "cultural responsiveness",
+    "volunteering", "community capacity", "place-based", "neighbourhood",
+    "community hub", "community centre", "Wellington", "Aro Valley"
+  ]
+}

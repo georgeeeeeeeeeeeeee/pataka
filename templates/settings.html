@@ -94,7 +94,7 @@
   <div class="col-12">
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white fw-semibold pt-3 d-flex justify-content-between">
-        <div><i class="bi bi-person-badge me-2 text-primary"></i>Practitioner Profile (scoring ground truth)</div>
+        <div><i class="bi bi-building me-2 text-primary"></i>Organisation Profile (scoring ground truth)</div>
         <small class="text-muted fw-normal">Edit profile.json to update</small>
       </div>
       <div class="card-body">
@@ -102,11 +102,11 @@
           <div class="col-md-4">
             <h6 class="text-muted small text-uppercase fw-semibold mb-2">Identity</h6>
             <dl class="row g-1" style="font-size:0.85rem;">
-              <dt class="col-4 text-muted">Name</dt><dd class="col-8">{{ profile.identity.name }}</dd>
+              <dt class="col-4 text-muted">Name</dt><dd class="col-8">{{ profile.identity.org_name }}</dd>
               <dt class="col-4 text-muted">Location</dt><dd class="col-8">{{ profile.identity.location }}</dd>
-              <dt class="col-4 text-muted">Role</dt><dd class="col-8">{{ profile.identity.current_role }}</dd>
-              <dt class="col-4 text-muted">Status</dt><dd class="col-8">{{ profile.identity.registration_status | replace('_',' ') | title }}</dd>
-              <dt class="col-4 text-muted">Entity</dt><dd class="col-8">{{ profile.identity.entity_type | replace('_',' ') | title }}</dd>
+              <dt class="col-4 text-muted">Type</dt><dd class="col-8">{{ (profile.identity.org_type or '') | replace('_',' ') | title }}</dd>
+              <dt class="col-4 text-muted">Registration</dt><dd class="col-8">{{ (profile.identity.registration or '') | replace('_',' ') | title }}</dd>
+              <dt class="col-4 text-muted">Entity</dt><dd class="col-8">{{ (profile.identity.entity_type or '') | replace('_',' ') | title }}</dd>
             </dl>
           </div>
           <div class="col-md-4">
@@ -123,19 +123,30 @@
           <div class="col-md-4">
             <h6 class="text-muted small text-uppercase fw-semibold mb-2">Impact</h6>
             <dl class="row g-1" style="font-size:0.85rem;">
-              <dt class="col-6 text-muted">Children reached</dt>
-              <dd class="col-6 fw-semibold">~{{ "{:,}".format(profile.demonstrated_impact.children_reached) }}</dd>
-              <dt class="col-6 text-muted">Professionals trained</dt>
-              <dd class="col-6 fw-semibold">{{ profile.demonstrated_impact.professionals_trained }}+</dd>
+              {% if profile.demonstrated_impact.community_members_engaged %}
+              <dt class="col-5 text-muted">Community</dt>
+              <dd class="col-7 fw-semibold">{{ profile.demonstrated_impact.community_members_engaged }}</dd>
+              {% endif %}
+              {% if profile.demonstrated_impact.years_operating %}
+              <dt class="col-5 text-muted">Operating</dt>
+              <dd class="col-7">{{ profile.demonstrated_impact.years_operating }}</dd>
+              {% endif %}
+              {% if profile.demonstrated_impact.volunteers %}
+              <dt class="col-5 text-muted">Volunteers</dt>
+              <dd class="col-7">{{ profile.demonstrated_impact.volunteers }}</dd>
+              {% endif %}
             </dl>
             <h6 class="text-muted small text-uppercase fw-semibold mb-2 mt-3">Scoring Rules</h6>
             <div style="font-size:0.78rem; color:#555;">
               <div class="text-success">✓ Māori edge: +{{ profile.scoring_rules.boosts.maori_community_edge }}</div>
-              <div class="text-success">✓ School edge: +{{ profile.scoring_rules.boosts.school_based_edge }}</div>
+              <div class="text-success">✓ Community/youth edge: +{{ profile.scoring_rules.boosts.community_youth_edge }}</div>
               <div class="text-success">✓ Warm contact: +{{ profile.scoring_rules.boosts.warm_contact }}</div>
-              <div class="text-danger">✗ Full reg required: {{ profile.scoring_rules.penalties.requires_full_nzac_registration }}</div>
-              <div class="text-danger">✗ Org required: {{ profile.scoring_rules.penalties.requires_organisational_affiliation }}</div>
-              <div class="text-danger">✗ Te Reo fluency: {{ profile.scoring_rules.penalties.requires_te_reo_fluency }}</div>
+              {% if profile.scoring_rules.penalties.requires_te_reo_fluency %}
+              <div class="text-danger">✗ Te Reo fluency required: {{ profile.scoring_rules.penalties.requires_te_reo_fluency }}</div>
+              {% endif %}
+              {% if profile.scoring_rules.penalties.requires_individual_practitioner %}
+              <div class="text-danger">✗ Individual practitioner only: {{ profile.scoring_rules.penalties.requires_individual_practitioner }}</div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -171,7 +182,7 @@
           <div class="col-md-4">
             <strong>Database</strong><br>
             <code style="font-size:0.82rem;">SQLite (local)</code>
-            <div class="text-muted small mt-1">Stored at <code>data/opportunity_agent.db</code></div>
+            <div class="text-muted small mt-1">Stored at <code>data/pataka.db</code></div>
           </div>
         </div>
       </div>

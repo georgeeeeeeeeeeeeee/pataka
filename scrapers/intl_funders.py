@@ -1,5 +1,10 @@
 """
 Scrapers for international funders.
+
+NOTE: International funders are lower priority for the Wellington-focused open-source
+release of this tool. Most Wellington community organisations will find little relevant
+funding here. These scrapers may be removed in a future version — disable them in
+config.py by setting "enabled": False if they're generating noise for your use case.
 """
 import logging
 from scrapers.base import BaseScraper, ScrapedOpportunity

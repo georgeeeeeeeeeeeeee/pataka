@@ -31,12 +31,12 @@ def _get_client() -> Optional[anthropic.Anthropic]:
 # Monthly Intelligence Brief (Phase 3)
 # ---------------------------------------------------------------------------
 
-BRIEF_PROMPT = """You are writing a monthly funding intelligence brief for practitioners in the
-New Zealand health, education, and community sectors.
+BRIEF_PROMPT = """You are writing a monthly funding intelligence brief for Wellington-region
+community organisations in New Zealand.
 
-This brief will be read by NGO managers, iwi development leads, and independent practitioners
-who need to understand where institutional money is flowing. Write clean, professional prose —
-informed, analytical, no filler.
+This brief will be read by community trust managers, NGO coordinators, volunteer coordinators,
+social workers, and community developers who need to understand where funding is flowing.
+Write clean, professional prose — informed, analytical, no filler.
 
 ## DATA: Opportunities identified this month
 {opportunities_json}
@@ -143,8 +143,12 @@ def generate_brief(opportunities: list, period: str = None) -> dict:
 
 def _infer_country(source_id: str) -> str:
     nz_sources = {
+        # National NZ funders
         "creative_nz", "nz_on_air", "community_matters", "msd", "tpk",
-        "foundation_north", "wct", "tindall", "todd", "gets",
+        "tindall", "todd",
+        # Wellington regional funders
+        "wcc", "gwrc", "wct", "nikau", "hutt_city", "upper_hutt",
+        "lion", "four_winds", "mangai_paho", "pacific_trust",
     }
     if source_id in nz_sources:
         return "NZ"
@@ -202,9 +206,9 @@ def _placeholder_brief(period: str, opportunities: list) -> str:
 # Application Drafter (Phase 4)
 # ---------------------------------------------------------------------------
 
-APPLICATION_PROMPT = """You are drafting a funding application or expression of interest for George Johnston.
+APPLICATION_PROMPT = """You are drafting a funding application or expression of interest for {org_name}.
 
-## GEORGE'S PROFILE
+## ORGANISATION PROFILE
 {profile_summary}
 
 ## OPPORTUNITY
@@ -219,59 +223,30 @@ Fit Score: {fit_score}/10 — {fit_justification}
 
 ## KEY FLAGS
 - Requires organisational affiliation: {requires_org}
-- Maori community experience is a competitive edge: {maori_edge}
-- School-based background is a competitive edge: {school_edge}
+- Māori community focus is a competitive edge: {maori_edge}
+- Community/youth focus is a competitive edge: {school_edge}
 
 ## TASK
 Write a first-draft application or expression of interest in clean, professional Markdown.
 
-Structure it appropriately for the opportunity type (grant application, EOI, tender response).
-Use the most relevant aspects of George's profile for this funder's stated priorities.
+Structure it appropriately for the opportunity type (grant application, EOI, proposal).
+Use the most relevant aspects of the organisation's profile for this funder's stated priorities.
 
 IMPORTANT:
-- If requires_org is True: note this flag prominently and frame the application around
-  potential partnership arrangements while making George's contribution clear.
-- If maori_edge is True: foreground his Nga Whetuu Marama co-facilitation and culturally
-  responsive practice experience.
-- If school_edge is True: foreground his Newlands College role and population-level reach.
-- For creative grants (Creative NZ, NZ On Air): foreground the music production and
-  Substack cultural criticism work.
-- Do not fabricate credentials. Flag with [VERIFY] where George should check or add detail.
-- Include a section: ## Notes for George — specific things to personalise or verify.
+- If requires_org is True: confirm organisational status and note any registration details.
+- If maori_edge is True: foreground the organisation's kaupapa Māori relationships and
+  culturally responsive practice.
+- If school_edge is True: foreground the organisation's community and youth-facing work.
+- Do not fabricate credentials. Flag with [VERIFY] where the organisation should check or add detail.
+- Include a section: ## Notes for the Applicant — specific things to personalise or verify.
 
 Word length: 600–1200 words (adjust for opportunity complexity)."""
 
-PROFILE_SUMMARY_FULL = """
-George Johnston | Wellington, NZ | Age 36
 
-ROLES: Guidance Counsellor, Newlands College (current); Private Practice counsellor
-(NZ and international clients); Master of Counselling candidate, Massey University (Year 1)
-
-DEMONSTRATED IMPACT:
-- ~150,000 children reached through national programme delivery
-- 960+ professionals trained across community and education sectors
-- Delivered Coliberate (communication skills) nationally across NZ schools
-- Delivered Pause Breathe Smile (mindfulness) nationally in school contexts
-- Co-facilitated Nga Whetuu Marama community mental health programme, Opotiki
-  (kaupapa Maori framework, community-developed)
-
-REGISTRATION: Working toward NZAC registration (student registration in progress).
-Practises within NZAC Code of Ethics. NZ insurance held.
-
-ENTITY: Sole practitioner — not an organisation.
-
-CREATIVE PRACTICE:
-- Experimental music production under "Dissolution as Praxis" aesthetic framework
-- Substack: cultural theory and continental philosophy applied to contemporary phenomena
-  (gaining recognition in academic communities)
-- Active music releases in preparation (relevant to NZ On Air / Creative NZ)
-
-LANGUAGES: English (native); Te Reo Maori (developing — basic mihi, cultural concepts
-integrated into practice; not conversational)
-
-AFFILIATIONS: Newlands College, Massey University, Coliberate, Pause Breathe Smile,
-Nga Whetuu Marama
-"""
+def _build_app_profile_summary(profile: dict) -> str:
+    """Build a narrative profile summary for application drafting prompts."""
+    from scorer import _build_profile_summary
+    return _build_profile_summary(profile)
 
 
 def draft_application(opportunity, additional_notes: str = None) -> str:
@@ -280,7 +255,7 @@ def draft_application(opportunity, additional_notes: str = None) -> str:
 
     Args:
         opportunity: Opportunity model instance
-        additional_notes: Optional extra context from George
+        additional_notes: Optional extra context from the applicant
 
     Returns:
         Markdown string of the draft application
@@ -289,10 +264,16 @@ def draft_application(opportunity, additional_notes: str = None) -> str:
     if not client:
         return _placeholder_application(opportunity)
 
+    profile = Config.load_profile()
+    org_name = profile.get("identity", {}).get("org_name", "the organisation")
+    profile_summary = _build_app_profile_summary(profile)
+    if additional_notes:
+        profile_summary += f"\n\nAdditional context from applicant: {additional_notes}"
+
     try:
-        extra = f"\n\nAdditional context from George: {additional_notes}" if additional_notes else ""
         prompt = APPLICATION_PROMPT.format(
-            profile_summary=PROFILE_SUMMARY_FULL + extra,
+            org_name=org_name,
+            profile_summary=profile_summary,
             funder_name=opportunity.funder_name,
             grant_name=opportunity.grant_name,
             description=(opportunity.description or "")[:1500],
@@ -302,9 +283,9 @@ def draft_application(opportunity, additional_notes: str = None) -> str:
             url=opportunity.url,
             fit_score=opportunity.fit_score or "N/A",
             fit_justification=opportunity.fit_justification or "not scored",
-            requires_org="YES — flag prominently" if opportunity.requires_org else "No",
-            maori_edge="YES — foreground Nga Whetuu Marama and culturally responsive practice" if opportunity.maori_edge else "No",
-            school_edge="YES — foreground Newlands College role and population reach" if opportunity.school_edge else "No",
+            requires_org="YES — confirm organisational status" if opportunity.requires_org else "No",
+            maori_edge="YES — foreground kaupapa Māori relationships and culturally responsive practice" if opportunity.maori_edge else "No",
+            school_edge="YES — foreground community and youth-facing work" if opportunity.school_edge else "No",
         )
 
         message = client.messages.create(
@@ -320,8 +301,17 @@ def draft_application(opportunity, additional_notes: str = None) -> str:
 
 
 def _placeholder_application(opportunity) -> str:
+    try:
+        profile = Config.load_profile()
+        org_name = profile.get("identity", {}).get("org_name", "Your Organisation")
+        focus_areas = ", ".join(profile.get("identity", {}).get("focus_areas", []))
+    except Exception:
+        org_name = "Your Organisation"
+        focus_areas = ""
+
     return f"""# Application Draft — {opportunity.grant_name}
 **Funder:** {opportunity.funder_name}
+**Applicant:** {org_name}
 **Amount:** {opportunity.amount_text or 'not specified'}
 **Deadline:** {opportunity.deadline_text or 'not specified'}
 
@@ -331,16 +321,15 @@ def _placeholder_application(opportunity) -> str:
 
 ## Key Points to Cover
 
-- George Johnston's current role as Guidance Counsellor at Newlands College
-- Scale of demonstrated impact (~150,000 children, 960+ professionals trained)
-- Specific programme experience: Coliberate, Pause Breathe Smile, Nga Whetuu Marama
-{"- **NOTE: This opportunity may require organisational affiliation. Consider partnership approach.**" if opportunity.requires_org else ""}
-{"- Foreground Nga Whetuu Marama co-facilitation and culturally responsive practice" if opportunity.maori_edge else ""}
-{"- Foreground Newlands College role and school-based mental health expertise" if opportunity.school_edge else ""}
+- {org_name}'s mission and track record in the community
+{f"- Focus areas: {focus_areas}" if focus_areas else ""}
+{"- **NOTE: This opportunity requires organisational affiliation — confirm registration status.**" if opportunity.requires_org else ""}
+{"- Foreground kaupapa Māori relationships and culturally responsive practice" if opportunity.maori_edge else ""}
+{"- Foreground community and youth-facing work" if opportunity.school_edge else ""}
 
-## Notes for George
-- [VERIFY] Check eligibility criteria against your current NZAC registration status
-- [ADD] Specific outcomes data from Coliberate or Pause Breathe Smile programmes if available
-- [ADD] Any letters of support from Newlands College or programme partners
+## Notes for the Applicant
+- [VERIFY] Check eligibility criteria match your organisation's registration and structure
+- [ADD] Specific outcomes data and evidence of community impact
+- [ADD] Any letters of support from community partners or stakeholders
 - Review the funder's stated priorities at: {opportunity.url}
 """

@@ -27,7 +27,7 @@ def opportunity_to_markdown(opp) -> str:
     if opp.requires_registration:
         flags.append("⚠️ **Requires full registration** (working toward NZAC)")
     if opp.requires_maori_fluency:
-        flags.append("⚠️ **Requires Te Reo fluency** (George has developing proficiency)")
+        flags.append("⚠️ **Requires Te Reo fluency** (organisation has developing te reo proficiency)")
     if opp.high_value:
         flags.append("💰 **High-value opportunity** (>$50k)")
 

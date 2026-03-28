@@ -18,7 +18,7 @@ class Config:
     DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 
     # Database — use absolute path so SQLite can find it from any working directory
-    _default_db = f"sqlite:///{BASE_DIR / 'data' / 'opportunity_agent.db'}"
+    _default_db = f"sqlite:///{BASE_DIR / 'data' / 'pataka.db'}"
     DATABASE_URL = os.environ.get("DATABASE_URL", _default_db)
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -38,8 +38,8 @@ class Config:
     REQUEST_TIMEOUT = 30
     REQUEST_DELAY = 2  # seconds between requests per domain
     USER_AGENT = (
-        "Mozilla/5.0 (compatible; OpportunityAgent/1.0; "
-        "+https://github.com/gjohnston/opportunity-agent)"
+        "Mozilla/5.0 (compatible; Pataka/1.0; "
+        "+https://github.com/gjohnston/pataka)"
     )
 
     # Scoring
@@ -80,7 +80,7 @@ FUNDER_SOURCES = [
         "scraper": "nz_on_air",
         "category": "arts_culture",
         "country": "NZ",
-        "enabled": True,
+        "enabled": False,
     },
     {
         "id": "community_matters",
@@ -110,24 +110,6 @@ FUNDER_SOURCES = [
         "enabled": True,
     },
     {
-        "id": "foundation_north",
-        "name": "Foundation North",
-        "url": "https://www.foundationnorth.org.nz/funding/",
-        "scraper": "foundation_north",
-        "category": "community",
-        "country": "NZ",
-        "enabled": True,
-    },
-    {
-        "id": "wct",
-        "name": "Wellington Community Trust",
-        "url": "https://wellingtoncommunityfund.org.nz/funding/",
-        "scraper": "generic_grant_listing",
-        "category": "community",
-        "country": "NZ",
-        "enabled": True,
-    },
-    {
         "id": "tindall",
         "name": "Tindall Foundation",
         "url": "https://tindall.org.nz/how-we-give/",
@@ -145,7 +127,100 @@ FUNDER_SOURCES = [
         "country": "NZ",
         "enabled": True,
     },
-    # International Funders
+    # Wellington regional funders
+    # (sourced from scrapers/wellington_funders.py WELLINGTON_FUNDERS registry)
+    {
+        "id": "wcc",
+        "name": "Wellington City Council",
+        "url": "https://wellington.govt.nz/community-support-and-resources/community-support/funding",
+        "scraper": "wcc",
+        "category": "community",
+        "country": "NZ",
+        "enabled": True,
+    },
+    {
+        "id": "gwrc",
+        "name": "Greater Wellington Regional Council",
+        "url": "https://www.gw.govt.nz/your-region/funding-and-awards/",
+        "scraper": "gwrc",
+        "category": "community",
+        "country": "NZ",
+        "enabled": True,
+    },
+    {
+        "id": "wct",
+        "name": "Wellington Community Trust",
+        "url": "https://wellingtoncommunityfund.org.nz/funding/",
+        "scraper": "wct",
+        "category": "community",
+        "country": "NZ",
+        "enabled": True,
+    },
+    {
+        "id": "nikau",
+        "name": "Nikau Foundation",
+        "url": "https://www.nikaufoundation.nz/funding-hub",
+        "scraper": "nikau",
+        "category": "community",
+        "country": "NZ",
+        "enabled": True,
+    },
+    {
+        "id": "hutt_city",
+        "name": "Hutt City Council",
+        "url": "https://www.huttcity.govt.nz/services/community-grants",
+        "scraper": "hutt_city",
+        "category": "community",
+        "country": "NZ",
+        "enabled": False,  # Returns 403 (Cloudflare bot protection) — URL may need updating
+    },
+    {
+        "id": "upper_hutt",
+        "name": "Upper Hutt City Council",
+        "url": "https://www.upperhutt.govt.nz/community/Grants-and-funding",
+        "scraper": "upper_hutt",
+        "category": "community",
+        "country": "NZ",
+        "enabled": False,  # Returns 403 (Cloudflare bot protection) — URL may need updating
+    },
+    {
+        "id": "lion",
+        "name": "Lion Foundation",
+        "url": "https://www.lionfoundation.org.nz/grants/apply",
+        "scraper": "lion",
+        "category": "community",
+        "country": "NZ",
+        "enabled": True,
+    },
+    {
+        "id": "four_winds",
+        "name": "Four Winds Foundation",
+        "url": "https://www.fourwindsfoundation.org.nz/apply",
+        "scraper": "four_winds",
+        "category": "community",
+        "country": "NZ",
+        "enabled": False,  # Domain not resolving — verify current URL before enabling
+    },
+    {
+        "id": "mangai_paho",
+        "name": "Māngai Pāho",
+        "url": "https://www.mangaipaho.govt.nz/funding",
+        "scraper": "mangai_paho",
+        "category": "maori_development",
+        "country": "NZ",
+        "enabled": False,  # Domain not resolving — verify current URL before enabling
+    },
+    {
+        "id": "pacific_trust",
+        "name": "Pacific Trust Aotearoa",
+        "url": "https://www.pacifictrust.org.nz/grants",
+        "scraper": "pacific_trust",
+        "category": "community",
+        "country": "NZ",
+        "enabled": False,  # Domain not resolving — verify current URL before enabling
+    },
+    # International funders — lower priority for the Wellington-focused open-source release.
+    # These may be removed in a future version.
     {
         "id": "wellcome",
         "name": "Wellcome Trust",
@@ -175,14 +250,4 @@ FUNDER_SOURCES = [
     },
 ]
 
-# GETS (Government tenders) configuration
-GETS_CONFIG = {
-    "base_url": "https://www.gets.govt.nz",
-    "search_url": "https://www.gets.govt.nz/Contracts/",
-    "categories": [
-        "health", "mental health", "counselling", "education", "youth",
-        "community services", "Maori development", "social services",
-        "research and evaluation"
-    ],
-    "enabled": True,
-}
+# NOTE: GETS/procurement scraping lives in TenderPulse NZ — not this project.

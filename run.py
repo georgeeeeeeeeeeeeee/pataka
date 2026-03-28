@@ -54,7 +54,7 @@ def main():
         start_scheduler(app)
 
     port = args.port or Config.PORT
-    logger.info(f"Starting Opportunity Agent UI at http://localhost:{port}")
+    logger.info(f"Starting Pātaka at http://localhost:{port}")
     logger.info("Press Ctrl+C to stop")
 
     app.run(

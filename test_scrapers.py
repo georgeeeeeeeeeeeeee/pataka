@@ -12,7 +12,7 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="repla
 import time
 import traceback
 import logging
-from config import FUNDER_SOURCES, GETS_CONFIG
+from config import FUNDER_SOURCES
 from scrapers import SCRAPER_REGISTRY, get_scraper
 
 # Minimal logging so we can see warnings without noise
@@ -119,46 +119,7 @@ def run_scraper(source_config):
     results_summary.append((name, status, n, all_issues))
 
 
-def run_gets():
-    print(f"\n{'='*60}")
-    print(f"  GETS — Government Electronic Tenders Service")
-    print(f"{'='*60}")
-    cfg = {
-        "id": "gets",
-        "name": "NZ Government (GETS)",
-        "url": GETS_CONFIG["base_url"],
-    }
-    t0 = time.time()
-    try:
-        from scrapers.gets import GETSScraper
-        scraper = GETSScraper(cfg)
-        opps = scraper.scrape()
-        elapsed = time.time() - t0
-    except Exception as e:
-        elapsed = time.time() - t0
-        print(f"  {FAIL}: exception after {elapsed:.1f}s: {e}")
-        traceback.print_exc()
-        results_summary.append(("GETS", FAIL, 0, [str(e)]))
-        return
-
-    n = len(opps)
-    print(f"  Elapsed : {elapsed:.1f}s")
-    print(f"  Results : {n} relevant tenders")
-
-    if n == 0:
-        print(f"  {WARN}: 0 relevant tenders — GETS may require auth, or no open tenders matched keywords")
-        status = WARN
-    else:
-        status = PASS
-        print(f"  {PASS}")
-        o = opps[0]
-        print(f"\n  Sample [0]:")
-        print(f"    name : {o.grant_name[:80]}")
-        print(f"    url  : {o.url[:100]}")
-        print(f"    tender: {o.is_tender}")
-        print(f"    dead : {o.deadline_text}")
-
-    results_summary.append(("GETS", status, n, []))
+# GETS tests removed — procurement scraping moved to TenderPulse NZ
 
 
 def audit_registry():
@@ -168,7 +129,6 @@ def audit_registry():
     print(f"{'='*60}")
 
     configured_scrapers = {s.get("scraper", s["id"]) for s in FUNDER_SOURCES}
-    configured_scrapers.add("gets")
 
     issues = []
     for key in SCRAPER_REGISTRY:
@@ -205,8 +165,8 @@ def print_summary():
 
 
 if __name__ == "__main__":
-    print("Opportunity Agent — Scraper Audit")
-    print(f"Testing {len(FUNDER_SOURCES)} configured sources + GETS\n")
+    print("Pātaka — Scraper Audit")
+    print(f"Testing {len(FUNDER_SOURCES)} configured sources\n")
 
     registry_issues = audit_registry()
 
@@ -215,8 +175,6 @@ if __name__ == "__main__":
             print(f"\nSKIP (disabled): {source['name']}")
             continue
         run_scraper(source)
-
-    run_gets()
 
     print_summary()
 

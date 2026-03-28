@@ -31,8 +31,8 @@
     {% if opp.requires_org %}{% set _ = flags.append(('warning', 'Requires organisational affiliation — consider partnership arrangements')) %}{% endif %}
     {% if opp.maori_edge %}{% set _ = flags.append(('success', 'Māori community experience gives competitive edge')) %}{% endif %}
     {% if opp.school_edge %}{% set _ = flags.append(('primary', 'School-based background gives competitive edge')) %}{% endif %}
-    {% if opp.requires_registration %}{% set _ = flags.append(('danger', 'Requires full registration — George is working toward NZAC')) %}{% endif %}
-    {% if opp.requires_maori_fluency %}{% set _ = flags.append(('warning', 'Requires Te Reo Māori fluency — George has developing proficiency')) %}{% endif %}
+    {% if opp.requires_registration %}{% set _ = flags.append(('danger', 'Requires full practitioner registration')) %}{% endif %}
+    {% if opp.requires_maori_fluency %}{% set _ = flags.append(('warning', 'Requires Te Reo Māori fluency — organisation has developing te reo proficiency')) %}{% endif %}
     {% if opp.high_value %}{% set _ = flags.append(('success', 'High-value opportunity (>$50,000)')) %}{% endif %}
 
     {% if flags %}

@@ -59,10 +59,10 @@ def run_full_scrape(app=None, source_ids: list = None) -> dict:
 
 def _run_scrape_in_context(source_ids: list = None) -> dict:
     """The actual scraping logic — must be called within Flask app context."""
-    from config import FUNDER_SOURCES, GETS_CONFIG, Config
+    from config import FUNDER_SOURCES, Config
     from models import db, Opportunity, ScraperRun, Brief, Contact
     from scrapers import get_scraper
-    from scorer import score_opportunity
+    from scorer import score_opportunity, qualify_and_score
 
     started_at = datetime.utcnow()
     summary = {
@@ -78,17 +78,6 @@ def _run_scrape_in_context(source_ids: list = None) -> dict:
     sources = [s for s in FUNDER_SOURCES if s.get("enabled", True)]
     if source_ids:
         sources = [s for s in sources if s["id"] in source_ids]
-
-    # Add GETS if enabled and not filtered
-    if GETS_CONFIG.get("enabled") and (source_ids is None or "gets" in source_ids):
-        sources.append({
-            "id": "gets",
-            "name": "GETS (NZ Government Tenders)",
-            "url": GETS_CONFIG["search_url"],
-            "scraper": "gets",
-            "category": "tenders",
-            "country": "NZ",
-        })
 
     # Get warm contact org names for scoring
     warm_orgs = [c.org_name for c in Contact.query.filter(Contact.warmth >= 2).all()]
@@ -111,95 +100,104 @@ def _run_scrape_in_context(source_ids: list = None) -> dict:
 
             new_count = 0
             updated_count = 0
+            rejected_count = 0
 
             for s_opp in scraped:
-                # Score the opportunity
-                score_result = score_opportunity(
-                    {
-                        "funder_name": s_opp.funder_name,
-                        "grant_name": s_opp.grant_name,
-                        "description": s_opp.description,
-                        "eligibility_summary": s_opp.eligibility_summary,
-                        "url": s_opp.url,
-                        "is_tender": s_opp.is_tender,
-                    },
+                qualified_opps = qualify_and_score(
+                    s_opp,
                     warm_contact=s_opp.funder_name in warm_orgs,
+                    fetch_fn=scraper.fetch,
                 )
+                if not qualified_opps:
+                    rejected_count += 1
+                    logger.debug(f"[{scraper_id}] Rejected: {s_opp.grant_name[:60]}")
+                    continue
 
-                # Check for existing record (upsert by URL)
-                existing = Opportunity.query.filter_by(url=s_opp.url).first()
+                for q_opp in qualified_opps:
+                    existing = Opportunity.query.filter_by(url=q_opp.url).first()
 
-                if existing:
-                    # Update last_seen and re-score
-                    existing.last_seen = datetime.utcnow()
-                    existing.fit_score = score_result["score"]
-                    existing.fit_justification = score_result["justification"]
-                    existing.relevance_paragraph = score_result.get("relevance_paragraph")
-                    existing.score_breakdown = score_result.get("score_breakdown")
-                    existing.requires_org = score_result["requires_org"]
-                    existing.maori_edge = score_result["maori_edge"]
-                    existing.school_edge = score_result["school_edge"]
-                    existing.requires_registration = score_result["requires_registration"]
-                    existing.requires_maori_fluency = score_result["requires_maori_fluency"]
-                    if s_opp.deadline:
-                        existing.deadline = s_opp.deadline
-                        existing.deadline_text = s_opp.deadline_text
-                    if s_opp.description and not existing.description:
-                        existing.description = s_opp.description
-                    updated_count += 1
-                else:
-                    # Determine if high value
-                    high_value = False
-                    if s_opp.amount_max and s_opp.amount_max >= Config.HIGH_VALUE_THRESHOLD:
-                        high_value = True
-                    if s_opp.amount_min and s_opp.amount_min >= Config.HIGH_VALUE_THRESHOLD:
-                        high_value = True
+                    if existing:
+                        # Update score + deadline/amount if improved
+                        existing.last_seen = datetime.utcnow()
+                        existing.fit_score = q_opp.score
+                        existing.fit_justification = q_opp.justification
+                        existing.relevance_paragraph = q_opp.relevance_paragraph
+                        existing.score_breakdown = q_opp.score_breakdown
+                        existing.requires_org = q_opp.requires_org
+                        existing.maori_edge = q_opp.maori_edge
+                        existing.school_edge = q_opp.school_edge
+                        existing.requires_registration = q_opp.requires_registration
+                        existing.requires_maori_fluency = q_opp.requires_maori_fluency
+                        if q_opp.deadline:
+                            existing.deadline = q_opp.deadline
+                            existing.deadline_text = q_opp.deadline_text
+                        if q_opp.amount_text and not existing.amount_text:
+                            existing.amount_text = q_opp.amount_text
+                        if q_opp.amount_min and not existing.amount_min:
+                            existing.amount_min = q_opp.amount_min
+                        if q_opp.amount_max and not existing.amount_max:
+                            existing.amount_max = q_opp.amount_max
+                        if q_opp.description and not existing.description:
+                            existing.description = q_opp.description
+                        updated_count += 1
+                    else:
+                        high_value = False
+                        if q_opp.amount_max and q_opp.amount_max >= Config.HIGH_VALUE_THRESHOLD:
+                            high_value = True
+                        if q_opp.amount_min and q_opp.amount_min >= Config.HIGH_VALUE_THRESHOLD:
+                            high_value = True
 
-                    new_opp = Opportunity(
-                        source_id=scraper_id,
-                        funder_name=s_opp.funder_name,
-                        grant_name=s_opp.grant_name,
-                        url=s_opp.url,
-                        is_tender=s_opp.is_tender,
-                        amount_min=s_opp.amount_min,
-                        amount_max=s_opp.amount_max,
-                        amount_text=s_opp.amount_text,
-                        high_value=high_value,
-                        deadline=s_opp.deadline,
-                        deadline_text=s_opp.deadline_text,
-                        open_date=s_opp.open_date,
-                        eligibility_summary=s_opp.eligibility_summary,
-                        description=s_opp.description,
-                        raw_data=json.dumps(s_opp.to_dict()),
-                        fit_score=score_result["score"],
-                        fit_justification=score_result["justification"],
-                        relevance_paragraph=score_result.get("relevance_paragraph"),
-                        score_breakdown=score_result.get("score_breakdown"),
-                        requires_org=score_result["requires_org"],
-                        maori_edge=score_result["maori_edge"],
-                        school_edge=score_result["school_edge"],
-                        requires_registration=score_result["requires_registration"],
-                        requires_maori_fluency=score_result["requires_maori_fluency"],
-                        status="new",
-                    )
-                    db.session.add(new_opp)
-                    new_count += 1
+                        new_opp = Opportunity(
+                            source_id=q_opp.source_id,
+                            funder_name=q_opp.funder_name,
+                            grant_name=q_opp.grant_name,
+                            url=q_opp.url,
+                            is_tender=q_opp.is_tender,
+                            amount_min=q_opp.amount_min,
+                            amount_max=q_opp.amount_max,
+                            amount_text=q_opp.amount_text,
+                            high_value=high_value,
+                            deadline=q_opp.deadline,
+                            deadline_text=q_opp.deadline_text,
+                            open_date=q_opp.open_date,
+                            eligibility_summary=q_opp.eligibility_summary,
+                            description=q_opp.description,
+                            raw_data=json.dumps(q_opp.to_dict()),
+                            fit_score=q_opp.score,
+                            fit_justification=q_opp.justification,
+                            relevance_paragraph=q_opp.relevance_paragraph,
+                            score_breakdown=q_opp.score_breakdown,
+                            requires_org=q_opp.requires_org,
+                            maori_edge=q_opp.maori_edge,
+                            school_edge=q_opp.school_edge,
+                            requires_registration=q_opp.requires_registration,
+                            requires_maori_fluency=q_opp.requires_maori_fluency,
+                            status="new",
+                        )
+                        db.session.add(new_opp)
+                        new_count += 1
 
             db.session.commit()
+            logger.info(
+                f"[{scraper_id}] {len(scraped)} scraped → {rejected_count} rejected"
+                f" → {new_count + updated_count} saved ({new_count} new, {updated_count} updated)"
+            )
 
             run_log.completed_at = datetime.utcnow()
             run_log.status = "completed"
-            run_log.opportunities_found = len(scraped)
+            run_log.opportunities_found = new_count + updated_count
             run_log.new_opportunities = new_count
             db.session.commit()
 
             summary["scrapers_run"].append({
                 "id": scraper_id,
-                "found": len(scraped),
+                "scraped": len(scraped),
+                "found": new_count + updated_count,
                 "new": new_count,
                 "updated": updated_count,
+                "rejected": rejected_count,
             })
-            summary["total_found"] += len(scraped)
+            summary["total_found"] += new_count + updated_count
             summary["new_opportunities"] += new_count
             summary["updated_opportunities"] += updated_count
 

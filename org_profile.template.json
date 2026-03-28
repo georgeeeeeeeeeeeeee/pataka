@@ -1,0 +1,87 @@
+{
+  "_instructions": "Copy this file to profile.json and fill in your organisation's details. See profile.json for a worked example using a fictional Wellington community trust.",
+  "identity": {
+    "org_name": "Your Organisation Name",
+    "org_type": "e.g. charitable_trust / incorporated_society / iwi_organisation / community_board",
+    "entity_type": "registered_organisation (or sole_practitioner / individual — affects org-affiliation scoring)",
+    "location": "Wellington, New Zealand",
+    "region": "e.g. Wellington City / Lower Hutt / Upper Hutt / Kāpiti / Wairarapa / Wellington Region",
+    "focus_areas": ["e.g. youth", "mental health", "environment", "arts", "housing", "disability"],
+    "registration": "e.g. registered_charity / incorporated_society / not_registered",
+    "annual_budget_range": "e.g. under_50k / 50k_200k / 200k_plus"
+  },
+  "demonstrated_impact": {
+    "_instructions": "List concrete impact metrics and programmes. These appear in AI-scored summaries and application drafts.",
+    "example_metric_1": "e.g. 500 people supported annually through community programmes",
+    "example_metric_2": "e.g. 10 years of continuous service in the Lower Hutt community",
+    "programmes": [
+      "e.g. Weekly community kai (free meals programme)",
+      "e.g. Youth mentoring programme (ages 12–18)",
+      "e.g. Environment restoration planting days"
+    ]
+  },
+  "competencies": {
+    "_instructions": "Each competency has a weight (1-10), keywords for matching, and evidence. Higher weight = stronger match priority. Remove or add competency blocks as needed.",
+    "example_competency_1": {
+      "weight": 9,
+      "keywords": [
+        "e.g. youth development", "young people", "rangatahi", "mentoring",
+        "secondary school", "transition to work"
+      ],
+      "evidence": "e.g. Running youth mentoring programme since 2018, 120 young people per year"
+    },
+    "example_competency_2": {
+      "weight": 8,
+      "keywords": [
+        "e.g. community wellbeing", "social cohesion", "community resilience",
+        "neighbourhood", "community development"
+      ],
+      "evidence": "e.g. Weekly community events serving 200+ residents; established community garden"
+    },
+    "example_competency_3": {
+      "weight": 7,
+      "keywords": [
+        "e.g. Māori", "kaupapa Māori", "iwi", "hapū", "whānau",
+        "tangata whenua", "Treaty of Waitangi", "bicultural"
+      ],
+      "evidence": "e.g. Partnership with local marae; tikanga Māori embedded in all programmes"
+    }
+  },
+  "scoring_rules": {
+    "base_tiers": {
+      "high_8_10": "Direct match with current programmes, demonstrated experience, and stated focus areas",
+      "medium_5_7": "Adjacent to current work; achievable with partnership or light adaptation",
+      "low_1_4": "Tangential, requires capabilities not held, or wrong geographic area"
+    },
+    "boosts": {
+      "maori_community_edge": 1,
+      "school_edge": 1,
+      "warm_contact": 1
+    },
+    "penalties": {
+      "requires_full_nzac_registration": -1,
+      "requires_organisational_affiliation": -2,
+      "requires_te_reo_fluency": -1
+    }
+  },
+  "notes": {
+    "_instructions": "Optional free-text notes that appear in AI prompts. Use these for context that doesn't fit the structured fields above.",
+    "example": "e.g. We are a small volunteer-led trust; preference for grants under $20k that don't require complex reporting."
+  },
+  "geographic_priority": {
+    "wellington_city": 10,
+    "lower_hutt": 9,
+    "upper_hutt": 9,
+    "kapiti": 8,
+    "wairarapa": 8,
+    "wellington_region": 10,
+    "national_nz": 7,
+    "international": 3
+  },
+  "funding_keywords": [
+    "_instructions: Replace with keywords relevant to your focus areas. Used in keyword-based scoring fallback when AI is unavailable.",
+    "e.g. community development", "youth", "wellbeing", "social services",
+    "Māori community", "Pacific community", "mental health", "environment",
+    "arts and culture", "sport and recreation", "disability", "older adults"
+  ]
+}
