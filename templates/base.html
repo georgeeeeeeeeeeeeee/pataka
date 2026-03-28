@@ -159,6 +159,14 @@
     <span class="status-dot dot-{{ last_run.status }}"></span>{{ last_run.status }}
   </div>
   {% endif %}
+
+  {% if session.get('authenticated') %}
+  <div class="mt-auto px-3 pb-3" style="position:absolute; bottom:0; left:0; right:0;">
+    <a href="{{ url_for('logout') }}" class="nav-link" style="font-size:0.8rem; opacity:0.5;">
+      <i class="bi bi-box-arrow-left"></i> Sign out
+    </a>
+  </div>
+  {% endif %}
 </nav>
 
 <!-- Main -->

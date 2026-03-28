@@ -20,6 +20,9 @@ class Config:
     # Database — use absolute path so SQLite can find it from any working directory
     _default_db = f"sqlite:///{BASE_DIR / 'data' / 'pataka.db'}"
     DATABASE_URL = os.environ.get("DATABASE_URL", _default_db)
+    # Render provides postgres:// but SQLAlchemy 2.x requires postgresql://
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -47,13 +50,25 @@ class Config:
 
     @classmethod
     def ensure_dirs(cls):
-        cls.DATA_DIR.mkdir(parents=True, exist_ok=True)
-        cls.APPLICATIONS_DIR.mkdir(parents=True, exist_ok=True)
+        try:
+            cls.DATA_DIR.mkdir(parents=True, exist_ok=True)
+            cls.APPLICATIONS_DIR.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass  # Read-only filesystem (handled by platform)
 
     @classmethod
     def load_profile(cls) -> dict:
-        with open(cls.PROFILE_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+        # Local file takes priority (development)
+        if cls.PROFILE_PATH.exists():
+            with open(cls.PROFILE_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        # Fall back to environment variable (Render / production)
+        profile_json = os.environ.get("PROFILE_JSON", "")
+        if profile_json:
+            return json.loads(profile_json)
+        raise FileNotFoundError(
+            "No profile found. Create profile.json or set the PROFILE_JSON environment variable."
+        )
 
     @classmethod
     def save_profile(cls, profile: dict):

@@ -9,7 +9,7 @@ from io import BytesIO
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, jsonify, send_file, abort
+    flash, jsonify, send_file, abort, session
 )
 from flask_sqlalchemy import SQLAlchemy
 
@@ -37,6 +37,36 @@ def create_app() -> Flask:
 
 
 def _register_routes(app: Flask):
+
+    # ------------------------------------------------------------------
+    # Auth
+    # ------------------------------------------------------------------
+    @app.before_request
+    def require_login():
+        password = os.environ.get("PATAKA_PASSWORD", "")
+        if not password:
+            return  # No password set — open access (local dev)
+        if request.endpoint in ("login", "logout", "static"):
+            return
+        if not session.get("authenticated"):
+            return redirect(url_for("login", next=request.path))
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        password = os.environ.get("PATAKA_PASSWORD", "")
+        error = None
+        if request.method == "POST":
+            if request.form.get("password") == password:
+                session["authenticated"] = True
+                next_url = request.args.get("next") or url_for("dashboard")
+                return redirect(next_url)
+            error = "Incorrect password — try again"
+        return render_template("login.html", error=error)
+
+    @app.route("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("login"))
 
     # ------------------------------------------------------------------
     # Context processors
